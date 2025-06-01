@@ -16,8 +16,10 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.PriorityQueue;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public class NeoTccInvCommand implements TabExecutor {
 
@@ -55,14 +57,25 @@ public class NeoTccInvCommand implements TabExecutor {
         } else if (args.length == 1) {
             return Arrays.asList("reload", "rollback", "see" , "ender");
         } else if (args.length == 2) {
+            String input = args[1].toLowerCase();
+
             switch (args[0].toLowerCase()) {
                 case "rollback":
                 case "see":
                 case "ender":
-                    ArrayList<String> ret = new ArrayList<>();
-                    for (OfflinePlayer p : Bukkit.getServer().getOfflinePlayers()) {
-                        ret.add(p.getName());
+                    OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
+                    PriorityQueue<String> heap = new PriorityQueue<>();
+                    for(OfflinePlayer p: offlinePlayers) {
+                        if(p.getName().toLowerCase().startsWith(input)) {
+                            heap.add(p.getName().toLowerCase());
+                        }
                     }
+
+                    ArrayList<String> ret = new ArrayList<>();
+                    for(String name: heap) {
+                        ret.add(Bukkit.getOfflinePlayer(name).getName());
+                    }
+
                     return ret;
             }
         }
