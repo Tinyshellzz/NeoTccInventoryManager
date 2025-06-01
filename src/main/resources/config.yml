@@ -1,0 +1,10 @@
+debug: true
+db_host: '127.0.0.1'
+db_port: 3306
+db_user: "root"
+db_passwd: "123"
+db_database: "inventory_recover"
+# 单位是秒
+backup_interval: 30
+# 数据多老会被清，以天为单位
+clean_data_older_than: 30

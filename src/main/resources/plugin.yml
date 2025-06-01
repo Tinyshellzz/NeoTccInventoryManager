@@ -1,0 +1,16 @@
+name: NeoTccInventoryManager
+version: '${version}'
+main: com.tinyshellzz.InvManager.NeoTccInventoryManager
+api-version: '1.20'
+load: POSTWORLD
+authors: [ Tinyshellzz ]
+folia-supported: true
+commands:
+  NeoTccInv:
+    description: NeoTccInv Command.
+    usage: /NeoTccInv rollback <玩家> <秒>
+    default: true
+permissions:
+  NeoTccInv.use:
+    default: op
+    description: Allows using /NeoTccInv see to operate
