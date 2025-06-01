@@ -3,11 +3,15 @@ package com.tinyshellzz.InvManager.utils;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.Location;
+import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
 import org.bukkit.plugin.Plugin;
 
+import java.util.ArrayList;
+import java.util.Comparator;
+import java.util.List;
 import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -41,6 +45,22 @@ public class MyUtil {
     public static String msgColor2(String msg) {
         // 将 & 颜色显示
         return ChatColor.translateAlternateColorCodes('&', msg);
+    }
+
+    /**
+     * 依据input，从list中补全命令
+     * @return
+     */
+    public static ArrayList<String> tabComplete(List<String> list, String input) {
+        input = input.trim().toLowerCase();
+        ArrayList<String> ret = new ArrayList<>();
+        for(String str: list) {
+            if(str.toLowerCase().startsWith(input)) {
+                ret.add(str);
+            }
+        }
+
+        return ret;
     }
 
     public static void teleport(Player player, Location location) {

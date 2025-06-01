@@ -219,6 +219,13 @@ public class InventorySyncService {
                 }
             }
         } catch (RuntimeException e) {
+            for(String name: NeoTccInvService.operatingInv.keySet()) {
+                Inventory seeEnderChest = NeoTccInvService.operatingInv.get(name);
+                closeInventory(seeEnderChest);
+            }
+            NeoTccInvService.operatingInv.clear();
+            NeoTccInvService.operatingInvNumber.clear();
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);
@@ -342,6 +349,13 @@ public class InventorySyncService {
                 }
             }
         } catch (RuntimeException e) {
+            for(String name: NeoTccInvService.operatingEnderChest.keySet()) {
+                Inventory seeEnderChest = NeoTccInvService.operatingEnderChest.get(name);
+                closeInventory(seeEnderChest);
+            }
+            NeoTccInvService.operatingEnderChest.clear();
+            NeoTccInvService.operatingEnderChestNumber.clear();
+
             StringWriter sw = new StringWriter();
             PrintWriter pw = new PrintWriter(sw);
             e.printStackTrace(pw);

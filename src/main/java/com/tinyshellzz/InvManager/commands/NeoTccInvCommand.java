@@ -2,6 +2,8 @@ package com.tinyshellzz.InvManager.commands;
 
 import com.tinyshellzz.InvManager.config.PluginConfig;
 import com.tinyshellzz.InvManager.services.NeoTccInvService;
+import com.tinyshellzz.InvManager.utils.MyPair;
+import com.tinyshellzz.InvManager.utils.MyUtil;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
 import org.bukkit.OfflinePlayer;
@@ -13,10 +15,7 @@ import org.bukkit.entity.Player;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.PriorityQueue;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
@@ -55,7 +54,8 @@ public class NeoTccInvCommand implements TabExecutor {
         if (!(sender instanceof Player player)) {
             return null;
         } else if (args.length == 1) {
-            return Arrays.asList("reload", "rollback", "see" , "ender");
+            String input = args[0].toLowerCase();
+            return MyUtil.tabComplete(Arrays.asList("reload", "rollback", "see" , "ender"), input) ;
         } else if (args.length == 2) {
             String input = args[1].toLowerCase();
 
@@ -64,19 +64,14 @@ public class NeoTccInvCommand implements TabExecutor {
                 case "see":
                 case "ender":
                     OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
-                    PriorityQueue<String> heap = new PriorityQueue<>();
+                    ArrayList<String> res = new ArrayList<>();
                     for(OfflinePlayer p: offlinePlayers) {
-                        if(p.getName().toLowerCase().startsWith(input)) {
-                            heap.add(p.getName().toLowerCase());
+                        if(p.getName() != null && p.getName().toLowerCase().startsWith(input)) {
+                            res.add(p.getName());
                         }
                     }
 
-                    ArrayList<String> ret = new ArrayList<>();
-                    for(String name: heap) {
-                        ret.add(Bukkit.getOfflinePlayer(name).getName());
-                    }
-
-                    return ret;
+                    return MyUtil.tabComplete(res, input);
             }
         }
 
