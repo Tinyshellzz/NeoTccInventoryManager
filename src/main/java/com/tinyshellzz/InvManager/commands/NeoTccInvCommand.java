@@ -55,16 +55,17 @@ public class NeoTccInvCommand implements TabExecutor {
             return null;
         } else if (args.length == 1) {
             String input = args[0].toLowerCase();
+
             return MyUtil.tabComplete(Arrays.asList("reload", "rollback", "see" , "ender"), input) ;
         } else if (args.length == 2) {
             String input = args[1].toLowerCase();
+            ArrayList<String> res = new ArrayList<>();
 
             switch (args[0].toLowerCase()) {
                 case "rollback":
                 case "see":
                 case "ender":
                     OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
-                    ArrayList<String> res = new ArrayList<>();
                     for(OfflinePlayer p: offlinePlayers) {
                         if(p.getName() != null && p.getName().toLowerCase().startsWith(input)) {
                             res.add(p.getName());

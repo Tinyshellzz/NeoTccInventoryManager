@@ -1,6 +1,5 @@
 package com.tinyshellzz.InvManager.utils;
 
-import com.tinyshellzz.InvManager.config.PluginConfig;
 import org.bukkit.Bukkit;
 import org.bukkit.entity.Player;
 import org.bukkit.inventory.ItemStack;
@@ -90,7 +89,6 @@ public class ItemStackBase64Converter {
         PlayerInventory inv = player.getInventory();
 
         ItemStack[] full = ItemStackBase64Converter.Base64ToItemStackArray(contents);
-        if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage(full.length + "");
         inv.setContents(Arrays.copyOfRange(full, 0, 36));
         inv.setArmorContents(Arrays.copyOfRange(full, 36, 40));
         inv.setItemInOffHand(full[40]);
