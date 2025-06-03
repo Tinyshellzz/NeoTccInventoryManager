@@ -13,7 +13,11 @@ import com.tinyshellzz.InvManager.services.InventoryBackup;
 import com.tinyshellzz.InvManager.services.InventorySyncService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
+import org.bukkit.entity.Player;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import static com.tinyshellzz.InvManager.ObjectPool.currentEnderChestMapper;
+import static com.tinyshellzz.InvManager.ObjectPool.currentInventoryMapper;
 
 public class NeoTccInventoryManager extends JavaPlugin {
     @Override
@@ -63,6 +67,15 @@ public class NeoTccInventoryManager extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "#NeoTccInv已关闭#");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "#                    #");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "######################");
+
+        // 插件关闭时，保存所有玩家的背包
+        for (Player player : Bukkit.getOnlinePlayers()) {
+            if(currentEnderChestMapper.exists(player.getUniqueId())) {
+                currentInventoryMapper.update(player);
+            } else {
+                currentEnderChestMapper.insert(player);
+            }
+        }
     }
 
 }

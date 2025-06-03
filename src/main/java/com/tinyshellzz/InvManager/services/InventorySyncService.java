@@ -98,11 +98,11 @@ public class InventorySyncService {
                             if (!ItemStackEquals(old_seeContents.get(i), copyOfSeeContents.get(i))) {
                                 conflictFlags[i] = true;
                                 seeToPlayer = true;
-                                armor.set(i, copyOfContents.get(i));
+                                armor.set(4-i-1, copyOfContents.get(i));
                             }
 
                             // 盔甲位置 玩家背包 同步到 seeContent
-                            if (!ItemStackEquals(old_seeContents.get(i), copyOfArmor.get(i))) {
+                            if (!ItemStackEquals(old_seeContents.get(i), copyOfArmor.get(4-i-1))) {
                                 if (conflictFlags[i]) { // 发现数据冲突
                                     closeInventory(seeInventory);
                                     NeoTccInvService.operatingInv.remove(player.getName());
@@ -111,7 +111,7 @@ public class InventorySyncService {
                                 }
                                 else {
                                     playerToSee = true;
-                                    seeContents.set(i, copyOfArmor.get(i));
+                                    seeContents.set(i, copyOfArmor.get(4-i-1));
                                 }
                             }
                         }

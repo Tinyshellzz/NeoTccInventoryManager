@@ -27,7 +27,7 @@ public class NeoTccInvService {
     public static boolean rollback(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
         Matcher _m = Pattern.compile("^.*CraftRemoteConsoleCommandSender.*$").matcher(sender.toString());
         if(!(sender instanceof ConsoleCommandSender || _m.find() || sender.isOp() || sender.hasPermission("NeoTccInv.use"))){
-            sender.sendMessage("只有控制台, op以及拥有NeoTccInv.use权限的玩家才能使用该命令");
+            sender.sendMessage(ChatColor.RED + "只有控制台, op以及拥有NeoTccInv.use权限的玩家才能使用该命令");
             return true;
         }
 
