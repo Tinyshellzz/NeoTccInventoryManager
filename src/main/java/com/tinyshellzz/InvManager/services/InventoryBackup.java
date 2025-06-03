@@ -15,13 +15,19 @@ import static com.tinyshellzz.InvManager.ObjectPool.plugin;
 import static com.tinyshellzz.InvManager.ObjectPool.historyInventoryMapper;
 
 public class InventoryBackup {
+    private static int k = 0;
     public static void run() {
         ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
         // 每隔 PluginConfig.backup_interval 时间备份一次所有在线玩家的背包
         scheduler.scheduleAtFixedRate(() -> {
                     try {
-                        if (!PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("[NeoTccInv] 背包备份");
+                        if (k>=20) {
+                            Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "[NeoTccInv] 背包备份");
+                            k = 0;
+                        } else {
+                            k++;
+                        }
                         for (Player p : plugin.getServer().getOnlinePlayers()) {
                             historyInventoryMapper.insert(p);
                         }
