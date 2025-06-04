@@ -12,6 +12,7 @@ import org.bukkit.event.Listener;
 import org.bukkit.event.inventory.InventoryCloseEvent;
 import org.bukkit.inventory.ItemStack;
 import org.bukkit.inventory.PlayerInventory;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
@@ -38,7 +39,14 @@ public class InventoryCloseListener implements Listener {
                 if (player != null) {
                     PlayerInventory inv = player.getInventory();
                     inv.setContents(Arrays.copyOfRange(contents, 9, 45));
-                    inv.setArmorContents(Arrays.copyOfRange(contents, 0, 4));
+
+                    @Nullable ItemStack[] armorContents = inv.getArmorContents();
+                    armorContents[3] = contents[0];
+                    armorContents[2] = contents[1];
+                    armorContents[1] = contents[2];
+                    armorContents[0] = contents[3];
+                    inv.setArmorContents(armorContents);
+
                     inv.setItemInOffHand(contents[4]);
                 } else {
                     OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(target);
