@@ -1,25 +1,30 @@
 package com.tinyshellzz.InvManager;
 
 import com.tinyshellzz.InvManager.commands.NeoTccInvCommand;
+import com.tinyshellzz.InvManager.commands.StopCommand;
 import com.tinyshellzz.InvManager.config.PluginConfig;
 import com.tinyshellzz.InvManager.database.CurrentEnderChestMapper;
 import com.tinyshellzz.InvManager.database.CurrentInventoryMapper;
 import com.tinyshellzz.InvManager.database.HistoryInventoryMapper;
-import com.tinyshellzz.InvManager.listeners.InventoryCloseListener;
-import com.tinyshellzz.InvManager.listeners.InventoryInteractListener;
-import com.tinyshellzz.InvManager.listeners.PlayerJoinListener;
-import com.tinyshellzz.InvManager.listeners.PlayerQuitListener;
+import com.tinyshellzz.InvManager.listeners.*;
 import com.tinyshellzz.InvManager.services.InventoryBackup;
 import com.tinyshellzz.InvManager.services.InventorySyncService;
+import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
+
+import java.util.HashMap;
+import java.util.UUID;
 
 import static com.tinyshellzz.InvManager.ObjectPool.currentEnderChestMapper;
 import static com.tinyshellzz.InvManager.ObjectPool.currentInventoryMapper;
 
 public class NeoTccInventoryManager extends JavaPlugin {
+    public static HashMap<UUID, ItemStack[]> inventoryMap = new HashMap<>();
+    public static HashMap<UUID, ItemStack[]> enderChestMap = new HashMap<>();
+
     @Override
     public void onEnable() {
         // team,启动！
@@ -32,6 +37,21 @@ public class NeoTccInventoryManager extends JavaPlugin {
         init();
         register();
         runServices();
+
+        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
+            ObjectPool.stopped = true;
+
+            if(StopCommand.stopCommand) return;
+            // This runs even during some unexpected terminations
+            Bukkit.getConsoleSender().sendMessage(ChatColor.GREEN +  "[NeoTccInv] 开始保存玩家数据! ");
+
+            for(UUID playerUUID: inventoryMap.keySet()) {
+                currentInventoryMapper.update(playerUUID, ItemStackBase64Converter.ItemStackArrayToBase64(inventoryMap.get(playerUUID)));
+            }
+            for(UUID playerUUID: enderChestMap.keySet()) {
+                currentEnderChestMapper.update(playerUUID, ItemStackBase64Converter.ItemStackArrayToBase64(enderChestMap.get(playerUUID)));
+            }
+        }));
     }
 
     public void init(){
@@ -39,7 +59,7 @@ public class NeoTccInventoryManager extends JavaPlugin {
         PluginConfig.reload();
 
         ObjectPool.historyInventoryMapper = new HistoryInventoryMapper();
-        ObjectPool.currentInventoryMapper = new CurrentInventoryMapper();
+        currentInventoryMapper = new CurrentInventoryMapper();
         ObjectPool.currentEnderChestMapper = new CurrentEnderChestMapper();
     }
 
@@ -52,6 +72,7 @@ public class NeoTccInventoryManager extends JavaPlugin {
 
         // 注册命令
         this.getCommand("NeoTccInv").setExecutor(new NeoTccInvCommand());
+        this.getCommand("stop").setExecutor(new StopCommand());
     }
 
     public void runServices() {
@@ -61,21 +82,12 @@ public class NeoTccInventoryManager extends JavaPlugin {
 
     @Override
     public void onDisable() {
+        ObjectPool.stopped = true;
         //TODO
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "######################");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "#                    #");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "#NeoTccInv已关闭#");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "#                    #");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "######################");
-
-        // 插件关闭时，保存所有玩家的背包
-        for (Player player : Bukkit.getOnlinePlayers()) {
-            if(currentEnderChestMapper.exists(player.getUniqueId())) {
-                currentInventoryMapper.update(player);
-            } else {
-                currentEnderChestMapper.insert(player);
-            }
-        }
     }
-
 }

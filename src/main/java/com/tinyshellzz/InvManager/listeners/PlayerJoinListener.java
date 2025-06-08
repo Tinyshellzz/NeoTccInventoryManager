@@ -14,5 +14,12 @@ public class PlayerJoinListener implements Listener {
         Player player = event.getPlayer();
         currentInventoryMapper.load_current_content(player);
         currentEnderChestMapper.load_current_content(player);
+
+        if(!currentInventoryMapper.exists(player.getUniqueId())) {
+            currentInventoryMapper.insert(player);
+        }
+        if(!currentEnderChestMapper.exists(player.getUniqueId())) {
+            currentEnderChestMapper.insert(player);
+        }
     }
 }

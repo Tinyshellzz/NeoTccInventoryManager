@@ -44,6 +44,8 @@ public class NeoTccInvCommand implements TabExecutor {
             return NeoTccInvService.see(sender, command, s, args);
         } else if (subcommand.equals("ender")) {
             return NeoTccInvService.ender(sender, command, s, args);
+        } else if (subcommand.equals("history")) {
+            return NeoTccInvService.history(sender, command, s, args);
         }
 
         return false;
@@ -56,13 +58,14 @@ public class NeoTccInvCommand implements TabExecutor {
         } else if (args.length == 1) {
             String input = args[0].toLowerCase();
 
-            return MyUtil.tabComplete(Arrays.asList("reload", "rollback", "see" , "ender"), input) ;
+            return MyUtil.tabComplete(Arrays.asList("reload", "rollback", "see" , "ender", "history"), input) ;
         } else if (args.length == 2) {
             String input = args[1].toLowerCase();
             ArrayList<String> res = new ArrayList<>();
 
             switch (args[0].toLowerCase()) {
-                case "rollback":
+                case "rollback": case "history":
+                    return MyUtil.tabComplete(Arrays.asList("inv" , "ender"), input);
                 case "see":
                 case "ender":
                     OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
@@ -74,6 +77,25 @@ public class NeoTccInvCommand implements TabExecutor {
 
                     return MyUtil.tabComplete(res, input);
             }
+        } else if (args.length == 3) {
+            String input = args[2].toLowerCase();
+            ArrayList<String> res = new ArrayList<>();
+
+            switch (args[1].toLowerCase()) {
+                case "inv": case "ender":
+                    OfflinePlayer[] offlinePlayers = Bukkit.getOfflinePlayers();
+                    for(OfflinePlayer p: offlinePlayers) {
+                        if(p.getName() != null && p.getName().toLowerCase().startsWith(input)) {
+                            res.add(p.getName());
+                        }
+                    }
+
+                    return MyUtil.tabComplete(res, input);
+            }
+        } else if (args.length == 4) {
+            String input = args[3].toLowerCase();
+
+            return MyUtil.tabComplete(Arrays.asList("时间(单位为秒)"), input);
         }
 
         return null;

@@ -1,5 +1,7 @@
 package com.tinyshellzz.InvManager.services;
 
+import com.tinyshellzz.InvManager.NeoTccInventoryManager;
+import com.tinyshellzz.InvManager.ObjectPool;
 import com.tinyshellzz.InvManager.config.PluginConfig;
 import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import net.md_5.bungee.api.ChatColor;
@@ -32,10 +34,29 @@ public class InventorySyncService {
         scheduler.scheduleAtFixedRate(() -> {
                     syncInventory();
                     syncEnderChest();
+                    savePlayerInv();
                 },
                 0,
-                25,
+                50,
                 TimeUnit.MILLISECONDS);
+    }
+
+    private static void savePlayerInv() {
+        if(!ObjectPool.stopped) {
+            Collection<? extends Player> onlinePlayers = Bukkit.getServer().getOnlinePlayers();
+            for (Player p : onlinePlayers) {
+                PlayerInventory inv = p.getInventory();
+                ItemStack[] full = new ItemStack[41]; // 36 + 4 + 1 (offhand)
+                System.arraycopy(inv.getContents(), 0, full, 0, 36);
+                System.arraycopy(inv.getArmorContents(), 0, full, 36, 4);
+                full[40] = inv.getItemInOffHand();
+                if (ObjectPool.stopped) break;
+                NeoTccInventoryManager.inventoryMap.put(p.getUniqueId(), full);
+
+                if (ObjectPool.stopped) break;
+                NeoTccInventoryManager.enderChestMap.put(p.getUniqueId(), p.getEnderChest().getContents());
+            }
+        }
     }
 
     private static void syncInventory() {

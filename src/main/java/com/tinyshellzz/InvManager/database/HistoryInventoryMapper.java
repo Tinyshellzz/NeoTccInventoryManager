@@ -23,6 +23,7 @@ public class HistoryInventoryMapper {
                     "player_uuid Char(36)," +
                     "`time` BIGINT," +
                     "contents LONGTEXT," +
+                    "ender LONGTEXT," +
                     "UNIQUE KEY (`time`, player_uuid)" +
                     ") ENGINE=InnoDB CHARACTER SET=utf8;");
             stmt.executeUpdate();
@@ -39,16 +40,17 @@ public class HistoryInventoryMapper {
         }
     }
 
-    private void insert(UUID player_uuid, String contents) {
+    private void insert(UUID player_uuid, String contents, String ender) {
         PreparedStatement stmt = null;
         Connection conn = null;
         ResultSet rs = null;
         try {
             conn = MysqlConfig.connect();
-            stmt = conn.prepareStatement("INSERT INTO history_inv VALUES (?, ?, ?)");
+            stmt = conn.prepareStatement("INSERT INTO history_inv VALUES (?, ?, ?, ?)");
             stmt.setString(1, player_uuid.toString());
             stmt.setLong(2, System.currentTimeMillis() / 1000L);
             stmt.setString(3, contents);
+            stmt.setString(4, ender);
             stmt.executeUpdate();
             conn.commit();
         } catch (SQLException e) {
@@ -65,14 +67,15 @@ public class HistoryInventoryMapper {
 
     public void insert(Player player) {
         String contents = ItemStackBase64Converter.PlayerInvToBase64(player);
-        insert(player.getUniqueId(), contents);
+        String ender = ItemStackBase64Converter.ItemStackArrayToBase64(player.getEnderChest().getContents());
+        insert(player.getUniqueId(), contents, ender);
     }
 
-    private String get_contents_older_than(UUID player_uuid, long unix_time_stamp) {
+    private String[] get_contents_older_than(UUID player_uuid, long unix_time_stamp) {
         PreparedStatement stmt = null;
         Connection conn = null;
         ResultSet rs = null;
-        String ret = null;
+        String[] ret = null;
 
         try {
             conn = MysqlConfig.connect();
@@ -83,7 +86,9 @@ public class HistoryInventoryMapper {
             rs = stmt.executeQuery();
 
             if(rs.next()) {
-                ret = rs.getString("contents");
+                ret = new String[2];
+                ret[0] = rs.getString("contents");
+                ret[1] = rs.getString("ender");
             }
         } catch (SQLException e) {
             Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[NeoTccInventoryRecover]HistoryInventoryMapper.get:" + e.getMessage());
@@ -99,7 +104,7 @@ public class HistoryInventoryMapper {
         return ret;
     }
 
-    public String get_contents_before_x_seconds(UUID player_uuid, int seconds) {
+    public String[] get_contents_before_x_seconds(UUID player_uuid, int seconds) {
         return get_contents_older_than(player_uuid, System.currentTimeMillis() / 1000L - seconds);
     }
 

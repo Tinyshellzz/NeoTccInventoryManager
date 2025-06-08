@@ -130,8 +130,7 @@ public class CurrentEnderChestMapper {
     }
 
     public void update(Player player) {
-        String contents = ItemStackBase64Converter.PlayerInvToBase64(player);
-        if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("玩家离开，获得末影箱contents");
+        String contents = ItemStackBase64Converter.ItemStackArrayToBase64(player.getEnderChest().getContents());
         update(player.getUniqueId(), contents);
     }
 }

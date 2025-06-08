@@ -10,6 +10,9 @@ commands:
     description: NeoTccInv Command.
     usage: /NeoTccInv rollback <玩家> <秒>
     default: true
+  stop:
+    description: Safely stop the server
+    usage: /stop
 permissions:
   NeoTccInv.use:
     default: op

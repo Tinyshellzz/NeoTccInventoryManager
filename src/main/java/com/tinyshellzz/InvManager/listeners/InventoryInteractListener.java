@@ -16,6 +16,8 @@ public class InventoryInteractListener implements Listener {
             if(!whoClicked.hasPermission("NeoTccInv.use") && !whoClicked.isOp()) {
                 event.setCancelled(true);
             }
+        } else if(title.startsWith("NeoTccInv: History")) {
+            event.setCancelled(true);
         }
     }
 
@@ -27,6 +29,8 @@ public class InventoryInteractListener implements Listener {
             if(!whoClicked.hasPermission("NeoTccInv.use") && !whoClicked.isOp()) {
                 event.setCancelled(true);
             }
+        } else if(title.startsWith("NeoTccInv: History")) {
+            event.setCancelled(true);
         }
     }
 }

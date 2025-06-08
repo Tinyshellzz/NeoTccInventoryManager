@@ -1,5 +1,6 @@
 package com.tinyshellzz.InvManager.services;
 
+import com.tinyshellzz.InvManager.config.PluginConfig;
 import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -31,36 +32,56 @@ public class NeoTccInvService {
             return true;
         }
 
-        if (args.length < 3) {
-            sender.sendMessage(ChatColor.YELLOW + "用法: /necotccinv rollback <玩家> 时间");
+        if (args.length < 4) {
+            sender.sendMessage(ChatColor.YELLOW + "用法: /necotccinv rollback [inv|ender] <玩家> 时间");
             return true;
         }
 
-        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[1]);
-        if(offlinePlayer == null) {
-            sender.sendMessage(ChatColor.YELLOW + "玩家 " + args[1] + " 不存在");
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
+        if(offlinePlayer.getName() == null) {
+            sender.sendMessage(ChatColor.YELLOW + "玩家 " + args[2] + " 不存在");
             return true;
         }
-        if(!args[2].matches("[0-9]+")) {
-            sender.sendMessage(ChatColor.YELLOW + "时间参数 " + args[2] + " 必须是数字");
+        if(!args[3].matches("[0-9]+")) {
+            sender.sendMessage(ChatColor.YELLOW + "时间参数 " + args[3] + " 必须是数字");
+            return true;
         }
 
         UUID player_uuid = offlinePlayer.getUniqueId();
-        String contents = historyInventoryMapper.get_contents_before_x_seconds(player_uuid, Integer.parseInt(args[2]));
-        if(contents == null) {
+        String[] ret = historyInventoryMapper.get_contents_before_x_seconds(player_uuid, Integer.parseInt(args[3]));
+        if(ret == null) {
             sender.sendMessage(ChatColor.YELLOW + "未找到该时间的背包备份，请尝试回档更多的时间");
             return true;
         }
-        if(currentInventoryMapper.exists(player_uuid)) {
-            currentInventoryMapper.update(player_uuid, contents);
-        } else {
-            currentInventoryMapper.insert(player_uuid, contents);
-        }
+
 
         // 如果玩家在线，就直接加载
-        Player onlinePlayer = Bukkit.getPlayer(args[1]);
-        if(onlinePlayer != null) {
-            currentInventoryMapper.load_current_content(onlinePlayer);
+        Player onlinePlayer = Bukkit.getPlayer(args[2]);
+        if(args[1].toLowerCase().equals("inv")) {
+            if(ret[0] != null) {
+                currentInventoryMapper.update(player_uuid, ret[0]);
+
+                if (onlinePlayer != null) {
+                    currentInventoryMapper.load_current_content(onlinePlayer);
+                }
+
+                if(PluginConfig.debug) sender.sendMessage(ChatColor.YELLOW + "回档中...");
+            } else {
+                sender.sendMessage(ChatColor.YELLOW + "未找到该时间的背包备份");
+            }
+        } else if(args[1].toLowerCase().equals("ender")) {
+            if(ret[1] != null) {
+                currentEnderChestMapper.update(player_uuid, ret[1]);
+
+                if (onlinePlayer != null) {
+                    currentEnderChestMapper.load_current_content(onlinePlayer);
+                }
+            } else {
+                sender.sendMessage(ChatColor.YELLOW + "未找到该时间的背包备份");
+            }
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "用法: /necotccinv rollback [inv|ender] <玩家> 时间");
+            return true;
         }
 
         sender.sendMessage(ChatColor.YELLOW + "回档成功");
@@ -200,6 +221,78 @@ public class NeoTccInvService {
             operatingEnderChestNumber.put(name, operatingEnderChestNumber.get(name) + 1);
         } else {
             operatingEnderChestNumber.put(name, 1);
+        }
+
+        return true;
+    }
+
+    public static boolean history(@NotNull CommandSender sender, @NotNull Command command, @NotNull String s, @NotNull String[] args) {
+        if (args.length < 4) {
+            sender.sendMessage(ChatColor.YELLOW + "用法: /necotccinv history [inv|ender] <玩家> 时间");
+            return true;
+        }
+
+        OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(args[2]);
+        if(offlinePlayer == null) {
+            sender.sendMessage(ChatColor.YELLOW + "玩家 " + args[2] + " 不存在");
+            return true;
+        }
+        if(!args[3].matches("[0-9]+")) {
+            sender.sendMessage(ChatColor.YELLOW + "时间参数 " + args[3] + " 必须是数字");
+            return true;
+        }
+
+        UUID player_uuid = offlinePlayer.getUniqueId();
+        String[] ret = historyInventoryMapper.get_contents_before_x_seconds(player_uuid, Integer.parseInt(args[3]));
+        if(ret == null) {
+            sender.sendMessage(ChatColor.YELLOW + "未找到该时间的背包备份，请尝试回档更多的时间");
+            return true;
+        }
+
+
+        Player admin = (Player) sender;
+        if(args[1].toLowerCase().equals("inv")) {
+            if(ret[0] != null) {
+                String invBase64 = ret[0];
+                ItemStack[] full = ItemStackBase64Converter.Base64ToItemStackArray(invBase64);
+
+                ItemStack[] contents = Arrays.copyOfRange(full, 0, 36);
+                ItemStack[] armor = Arrays.copyOfRange(full, 36, 40);
+                ItemStack offhand = full[40];
+
+                Inventory gui = Bukkit.createInventory(null, 45, "NeoTccInv: History " + offlinePlayer.getName() + " " + args[3]);
+
+                ItemStack[] guiContents = gui.getContents();
+                // Add main inventory
+                System.arraycopy(contents, 0, guiContents, 9, Math.min(contents.length, 36));
+                // Armor slots (top-left)
+                guiContents[0] = armor.length > 3 ? armor[3] : null; // Helmet
+                guiContents[1] =  armor.length > 2 ? armor[2] : null; // Chest
+                guiContents[2] = armor.length > 1 ? armor[1] : null; // Legs
+                guiContents[3] = armor.length > 0 ? armor[0] : null; // Boots
+                guiContents[4] = offhand; // Offhand
+                gui.setContents(guiContents);
+
+                // Open it for the admin
+                admin.openInventory(gui);
+            } else {
+                sender.sendMessage(ChatColor.YELLOW + "未找到该时间的背包备份");
+            }
+        } else if(args[1].toLowerCase().equals("ender")) {
+            if(ret[1] != null) {
+                ItemStack[] contents = ItemStackBase64Converter.Base64ToItemStackArray(ret[1]);
+                Inventory gui = Bukkit.createInventory(null, 27, "NeoTccInv: History " + offlinePlayer.getName() + " " + args[3]);
+
+                gui.setContents(contents);
+
+                // Open it for the admin
+                admin.openInventory(gui);
+            }  else {
+                sender.sendMessage(ChatColor.YELLOW + "未找到该时间的背包备份");
+            }
+        } else {
+            sender.sendMessage(ChatColor.YELLOW + "用法: /necotccinv rollback [inv|ender] <玩家> 时间");
+            return true;
         }
 
         return true;

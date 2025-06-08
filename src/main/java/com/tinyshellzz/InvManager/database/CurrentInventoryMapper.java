@@ -131,7 +131,6 @@ public class CurrentInventoryMapper {
 
     public void update(Player player) {
         String contents = ItemStackBase64Converter.PlayerInvToBase64(player);
-        if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("玩家离开，获得contents");
         update(player.getUniqueId(), contents);
     }
 }

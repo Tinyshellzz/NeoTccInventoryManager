@@ -9,6 +9,7 @@ import org.bukkit.plugin.Plugin;
 public class ObjectPool {
     public static Plugin plugin;
     public static Gson gson = new Gson();
+    public static boolean stopped = false;
 
     public static HistoryInventoryMapper historyInventoryMapper;
     public static CurrentInventoryMapper currentInventoryMapper;
