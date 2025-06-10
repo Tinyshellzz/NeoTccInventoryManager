@@ -84,7 +84,7 @@ public class CurrentInventoryMapper {
             rs = stmt.executeQuery();
 
             if(rs.next()) {
-                ret = rs.getString("contents");
+                ret = rs.getString(2);
             }
         } catch (SQLException e) {
             Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[NeoTccInventoryRecover]CurrentInventoryMapper.get:" + e.getMessage());

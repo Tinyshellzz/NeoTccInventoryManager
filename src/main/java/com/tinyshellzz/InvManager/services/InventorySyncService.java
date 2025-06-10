@@ -3,6 +3,7 @@ package com.tinyshellzz.InvManager.services;
 import com.tinyshellzz.InvManager.NeoTccInventoryManager;
 import com.tinyshellzz.InvManager.ObjectPool;
 import com.tinyshellzz.InvManager.config.PluginConfig;
+import com.tinyshellzz.InvManager.entities.MCPlayer;
 import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import net.md_5.bungee.api.ChatColor;
 import org.bukkit.Bukkit;
@@ -20,9 +21,9 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
-import static com.tinyshellzz.InvManager.ObjectPool.currentEnderChestMapper;
-import static com.tinyshellzz.InvManager.ObjectPool.currentInventoryMapper;
+import static com.tinyshellzz.InvManager.ObjectPool.*;
 
+@Deprecated
 public class InventorySyncService {
     private static final HashMap<UUID, ArrayList<ItemStack>> old_seeContents_map = new HashMap<>();
     private static final HashMap<UUID, ArrayList<ItemStack>> old_enderChest_map = new HashMap<>();
@@ -34,30 +35,12 @@ public class InventorySyncService {
         scheduler.scheduleAtFixedRate(() -> {
                     syncInventory();
                     syncEnderChest();
-                    savePlayerInv();
                 },
                 0,
                 50,
                 TimeUnit.MILLISECONDS);
     }
 
-    private static void savePlayerInv() {
-        if(!ObjectPool.stopped) {
-            Collection<? extends Player> onlinePlayers = Bukkit.getServer().getOnlinePlayers();
-            for (Player p : onlinePlayers) {
-                PlayerInventory inv = p.getInventory();
-                ItemStack[] full = new ItemStack[41]; // 36 + 4 + 1 (offhand)
-                System.arraycopy(inv.getContents(), 0, full, 0, 36);
-                System.arraycopy(inv.getArmorContents(), 0, full, 36, 4);
-                full[40] = inv.getItemInOffHand();
-                if (ObjectPool.stopped) break;
-                NeoTccInventoryManager.inventoryMap.put(p.getUniqueId(), full);
-
-                if (ObjectPool.stopped) break;
-                NeoTccInventoryManager.enderChestMap.put(p.getUniqueId(), p.getEnderChest().getContents());
-            }
-        }
-    }
 
     private static void syncInventory() {
         try {
@@ -119,11 +102,11 @@ public class InventorySyncService {
                             if (!ItemStackEquals(old_seeContents.get(i), copyOfSeeContents.get(i))) {
                                 conflictFlags[i] = true;
                                 seeToPlayer = true;
-                                armor.set(4-i-1, copyOfContents.get(i));
+                                armor.set(i, copyOfContents.get(i));
                             }
 
                             // 盔甲位置 玩家背包 同步到 seeContent
-                            if (!ItemStackEquals(old_seeContents.get(i), copyOfArmor.get(4-i-1))) {
+                            if (!ItemStackEquals(old_seeContents.get(i), copyOfArmor.get(i))) {
                                 if (conflictFlags[i]) { // 发现数据冲突
                                     closeInventory(seeInventory);
                                     NeoTccInvService.operatingInv.remove(player.getName());
@@ -132,7 +115,7 @@ public class InventorySyncService {
                                 }
                                 else {
                                     playerToSee = true;
-                                    seeContents.set(i, copyOfArmor.get(4-i-1));
+                                    seeContents.set(i, copyOfArmor.get(i));
                                 }
                             }
                         }
@@ -145,10 +128,6 @@ public class InventorySyncService {
                         }
                         // 左手位置 玩家背包 同步到 seeContent
                         if (!ItemStackEquals(old_seeContents.get(4), copyOfOffhand)) {
-                            if (PluginConfig.debug) {
-                                Bukkit.getConsoleSender().sendMessage(old_seeContents.get(4) == null ? "null" : old_seeContents.get(4).toString());
-                                Bukkit.getConsoleSender().sendMessage(copyOfOffhand == null ? "null" : copyOfOffhand.toString());
-                            }
                             if (conflictFlags[4]) { // 发现数据冲突
                                 closeInventory(seeInventory);
                                 NeoTccInvService.operatingInv.remove(player.getName());
@@ -203,8 +182,9 @@ public class InventorySyncService {
                         old_seeContents_map.put(player.getUniqueId(), seeContents);
                     }
                 } else {    // 如果玩家不在线，则同步到数据库
-                    OfflinePlayer offlinePlayer = Bukkit.getServer().getOfflinePlayer(name);
-                    Inventory seeInventory = NeoTccInvService.operatingInv.get(offlinePlayer.getName());
+//                    OfflinePlayer offlinePlayer = Bukkit.getServer().getOfflinePlayer(name);
+                    MCPlayer userByName = mcPlayerMapper.get_user_by_name(name);
+                    Inventory seeInventory = NeoTccInvService.operatingInv.get(name);
                     if (seeInventory == null) return;
                     ItemStack[] seeContents_ = seeInventory.getContents();
 
@@ -216,11 +196,11 @@ public class InventorySyncService {
                             seeContents.add(null);
                         }
                     }
-                    if (!old_seeContents_map.containsKey(offlinePlayer.getUniqueId())) {
-                        old_seeContents_map.put(offlinePlayer.getUniqueId(), seeContents);
+                    if (!old_seeContents_map.containsKey(userByName.uuid)) {
+                        old_seeContents_map.put(userByName.uuid, seeContents);
                     } else {
                         boolean changed = false;
-                        ArrayList<ItemStack> old_seeContents = old_seeContents_map.get(offlinePlayer.getUniqueId());
+                        ArrayList<ItemStack> old_seeContents = old_seeContents_map.get(userByName.uuid);
                         for (int i = 0; i < 45; i++) {
                             if (!ItemStackEquals(old_seeContents.get(i), seeContents.get(i))) {
                                 changed = true;
@@ -229,13 +209,13 @@ public class InventorySyncService {
 
                         if (changed) {
                             Thread th = new Thread(() -> {
-                                currentInventoryMapper.update(offlinePlayer.getUniqueId(), ItemStackBase64Converter.ItemStackArrayToBase64(seeContents_));
+                                currentInventoryMapper.update(userByName.uuid, ItemStackBase64Converter.ItemStackArrayToBase64(seeContents_));
                             });
 
                             th.start();
                         }
 
-                        old_seeContents_map.put(offlinePlayer.getUniqueId(), seeContents);
+                        old_seeContents_map.put(userByName.uuid, seeContents);
                     }
                 }
             }
@@ -330,8 +310,8 @@ public class InventorySyncService {
                         old_enderChest_map.put(player.getUniqueId(), seeEnderChest_contents);
                     }
                 } else {    // 如果玩家不在线，则同步到数据库
-                    OfflinePlayer offlinePlayer = Bukkit.getServer().getOfflinePlayer(name);
-                    Inventory seeEnderChest = NeoTccInvService.operatingEnderChest.get(offlinePlayer.getName());
+                    MCPlayer userByName = mcPlayerMapper.get_user_by_name(name);
+                    Inventory seeEnderChest = NeoTccInvService.operatingEnderChest.get(name);
                     if (seeEnderChest == null) return;
                     ItemStack[] seeEnderChest_ = seeEnderChest.getContents();
 
@@ -345,11 +325,12 @@ public class InventorySyncService {
                         }
                     }
 
-                    if (!old_enderChest_map.containsKey(offlinePlayer.getUniqueId())) {
-                        old_enderChest_map.put(offlinePlayer.getUniqueId(), seeEnderChest_contents);
+                    UUID player_uuid = userByName.uuid;
+                    if (!old_enderChest_map.containsKey(player_uuid)) {
+                        old_enderChest_map.put(player_uuid, seeEnderChest_contents);
                     } else {
                         boolean changed = false;
-                        ArrayList<ItemStack> seeEnderChest_contents_old = old_enderChest_map.get(offlinePlayer.getUniqueId());
+                        ArrayList<ItemStack> seeEnderChest_contents_old = old_enderChest_map.get(player_uuid);
                         for (int i = 0; i < 27; i++) {
                             if (!ItemStackEquals(seeEnderChest_contents_old.get(i), seeEnderChest_contents.get(i))) {
                                 changed = true;
@@ -359,13 +340,13 @@ public class InventorySyncService {
 
                         if (changed) {
                             Thread th = new Thread(() -> {
-                                currentEnderChestMapper.update(offlinePlayer.getUniqueId(), ItemStackBase64Converter.ItemStackArrayToBase64(seeEnderChest_));
+                                currentEnderChestMapper.update(player_uuid, ItemStackBase64Converter.ItemStackArrayToBase64(seeEnderChest_));
                             });
 
                             th.start();
                         }
 
-                        old_seeContents_map.put(offlinePlayer.getUniqueId(), seeEnderChest_contents);
+                        old_seeContents_map.put(player_uuid, seeEnderChest_contents);
                     }
                 }
             }
@@ -390,8 +371,8 @@ public class InventorySyncService {
         List<HumanEntity> viewers = new ArrayList<>(inventory.getViewers());
 
         for (HumanEntity viewer : viewers) {
-            if (viewer instanceof Player) {
-                ((Player) viewer).closeInventory();
+            if (viewer instanceof Player p) {
+                p.closeInventory();
             }
         }
     }

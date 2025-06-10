@@ -31,12 +31,11 @@ public class InventoryBackup {
 
                         if(!ObjectPool.stopped) {
                             for (Player p : plugin.getServer().getOnlinePlayers()) {
-                                if (ObjectPool.stopped) break;
-                                historyInventoryMapper.insert(p);
-                                if (ObjectPool.stopped) break;
-                                currentEnderChestMapper.update(p);
-                                if (ObjectPool.stopped) break;
-                                currentInventoryMapper.update(p);
+                                Player playerExact = Bukkit.getPlayerExact(p.getName());
+                                if(playerExact != null && playerExact.isOnline()) {
+                                    if (ObjectPool.stopped) break;
+                                    historyInventoryMapper.insert(playerExact);
+                                }
                             }
                         }
 

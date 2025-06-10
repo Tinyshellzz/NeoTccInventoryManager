@@ -14,6 +14,7 @@ public class PluginConfig {
     public static String db_database;
     public static long backup_interval;
     public static int clean_data_older_than;
+    public static int server_id;
     private static final ConfigWrapper configWrapper = new ConfigWrapper(plugin, "config.yml");
 
     public static void reload() {
@@ -28,6 +29,7 @@ public class PluginConfig {
         db_database = yamlconfig.getString("db_database");
         backup_interval = yamlconfig.getLong("backup_interval");
         clean_data_older_than = yamlconfig.getInt("clean_data_older_than");
+        server_id = yamlconfig.getInt("server_id");
     }
 
     @Override

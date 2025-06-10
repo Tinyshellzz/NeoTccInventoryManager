@@ -1,6 +1,7 @@
 package com.tinyshellzz.InvManager.listeners;
 
 import com.tinyshellzz.InvManager.config.PluginConfig;
+import com.tinyshellzz.InvManager.entities.MCPlayer;
 import com.tinyshellzz.InvManager.services.NeoTccInvService;
 import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import org.bukkit.Bukkit;
@@ -16,8 +17,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
-import static com.tinyshellzz.InvManager.ObjectPool.currentEnderChestMapper;
-import static com.tinyshellzz.InvManager.ObjectPool.currentInventoryMapper;
+import static com.tinyshellzz.InvManager.ObjectPool.*;
 
 public class InventoryCloseListener implements Listener {
     @EventHandler
@@ -28,28 +28,23 @@ public class InventoryCloseListener implements Listener {
             return;
         }
 
-        if(title.startsWith("NeoTccInv: Viewing ")) {
-            String target = title.substring(19);
+        if(title.startsWith("EditInv ")) {
+            String target = title.replace("EditInv ", "").toLowerCase();
 
-            if(NeoTccInvService.operatingInv.containsKey(target)) {
-                ItemStack[] contents = NeoTccInvService.operatingInv.get(target).getContents();
+            NeoTccInvService.editingInvNumber.put(target, NeoTccInvService.editingInvNumber.get(target) - 1);
+            if(NeoTccInvService.editingInvNumber.get(target) == 0) {
+
+                ItemStack[] contents = NeoTccInvService.editingInv.get(target).getContents();
                 if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage(target);
 
                 Player player = Bukkit.getPlayer(target);
-                if (player != null) {
+                if (player != null) {   // 玩家在线
                     PlayerInventory inv = player.getInventory();
                     inv.setContents(Arrays.copyOfRange(contents, 9, 45));
-
-                    @Nullable ItemStack[] armorContents = inv.getArmorContents();
-                    armorContents[3] = contents[0];
-                    armorContents[2] = contents[1];
-                    armorContents[1] = contents[2];
-                    armorContents[0] = contents[3];
-                    inv.setArmorContents(armorContents);
-
+                    inv.setArmorContents(Arrays.copyOfRange(contents, 0, 4));
                     inv.setItemInOffHand(contents[4]);
                 } else {
-                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(target);
+                    MCPlayer userByName = mcPlayerMapper.get_user_by_name(target);
 
                     ItemStack[] full = new ItemStack[41]; // 36 + 4 + 1 (offhand)
                     System.arraycopy(Arrays.copyOfRange(contents, 9, 45), 0, full, 0, 36);
@@ -57,28 +52,40 @@ public class InventoryCloseListener implements Listener {
                     full[40] = contents[4];
                     String contents_ = ItemStackBase64Converter.ItemStackArrayToBase64(full);
 
-                    currentInventoryMapper.update(offlinePlayer.getUniqueId(), contents_);
+                    currentInventoryMapper.update(userByName.uuid, contents_);
+                    mcPlayerMapper.update_shutdown_by_uuid(userByName.uuid, -1);    // 让更改生效
                 }
-            }
 
+                if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("保存更改的背包内容 " + target);
+                NeoTccInvService.editingInv.remove(target);
+            }
+        } else if(title.startsWith("EditEnder ")) {
+            String target = title.replace("EditEnder ", "").toLowerCase();
+
+            NeoTccInvService.editingEnderChestNumber.put(target, NeoTccInvService.editingEnderChestNumber.get(target) - 1);
+            if(NeoTccInvService.editingEnderChestNumber.get(target) == 0) {
+                ItemStack[] contents = NeoTccInvService.editingEnderChest.get(target).getContents();
+                Player player = Bukkit.getPlayer(target);
+                if (player != null) {   // 玩家在线
+                    player.getEnderChest().setContents(contents);
+                } else {
+                    MCPlayer userByName = mcPlayerMapper.get_user_by_name(target);
+
+                    currentEnderChestMapper.update(userByName.uuid, ItemStackBase64Converter.ItemStackArrayToBase64(contents));
+                    mcPlayerMapper.update_shutdown_by_uuid(userByName.uuid, -1);    // 让更改生效
+                }
+
+                if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("保存更改的末影箱内容 " + target);
+                NeoTccInvService.editingEnderChest.remove(target);
+            }
+        } else if(title.startsWith("Viewing ")) {
+            String target = title.replace("Viewing ", "").toLowerCase();
             NeoTccInvService.operatingInvNumber.put(target, NeoTccInvService.operatingInvNumber.get(target) - 1);
             if(NeoTccInvService.operatingInvNumber.get(target) == 0) {
                 NeoTccInvService.operatingInv.remove(target);
             }
-        } else if(title.startsWith("NeoTccInv: EnderChest ")) {
-            String target = title.replace("NeoTccInv: EnderChest ", "");
-            if(NeoTccInvService.operatingEnderChest.containsKey(target)) {
-                ItemStack[] contents = NeoTccInvService.operatingEnderChest.get(target).getContents();
-                Player player = Bukkit.getPlayer(target);
-                if (player != null) {
-                    player.getEnderChest().setContents(contents);
-                } else {
-                    OfflinePlayer offlinePlayer = Bukkit.getOfflinePlayer(target);
-
-                    currentEnderChestMapper.update(offlinePlayer.getUniqueId(), ItemStackBase64Converter.ItemStackArrayToBase64(contents));
-                }
-            }
-
+        } else if(title.startsWith("ViewEnder ")) {
+            String target = title.replace("ViewEnder ", "").toLowerCase();
             NeoTccInvService.operatingEnderChestNumber.put(target, NeoTccInvService.operatingEnderChestNumber.get(target) - 1);
             if(NeoTccInvService.operatingEnderChestNumber.get(target) == 0) {
                 NeoTccInvService.operatingEnderChest.remove(target);

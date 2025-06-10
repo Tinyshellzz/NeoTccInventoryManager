@@ -81,10 +81,11 @@ public class CurrentEnderChestMapper {
             conn.commit();
             stmt = conn.prepareStatement("SELECT * FROM current_ender_chest where player_uuid = ?");
             stmt.setString(1, player_uuid.toString());
+            Bukkit.getConsoleSender().sendMessage(player_uuid.toString());
             rs = stmt.executeQuery();
 
             if(rs.next()) {
-                ret = rs.getString("contents");
+                ret = rs.getString(2);
             }
         } catch (SQLException e) {
             Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[NeoTccInventoryRecover]CurrentEnderChestMapper.get:" + e.getMessage());

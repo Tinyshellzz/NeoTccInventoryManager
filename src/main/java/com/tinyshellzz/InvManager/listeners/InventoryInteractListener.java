@@ -12,11 +12,11 @@ public class InventoryInteractListener implements Listener {
     public void onInventoryClick(InventoryClickEvent event) {
         HumanEntity whoClicked = event.getWhoClicked();
         String title = event.getView().getTitle();
-        if(title.startsWith("NeoTccInv: Viewing") || title.startsWith("NeoTccInv: EnderChest")) {
+        if(title.startsWith("Viewing ") || title.startsWith("EnderChest" )) {
             if(!whoClicked.hasPermission("NeoTccInv.use") && !whoClicked.isOp()) {
                 event.setCancelled(true);
             }
-        } else if(title.startsWith("NeoTccInv: History")) {
+        } else if(title.startsWith("History ")) {
             event.setCancelled(true);
         }
     }
@@ -25,11 +25,11 @@ public class InventoryInteractListener implements Listener {
     public void onInventoryDrag(InventoryDragEvent event) {
         HumanEntity whoClicked = event.getWhoClicked();
         String title = event.getView().getTitle();
-        if(title.startsWith("NeoTccInv: Viewing") || title.startsWith("NeoTccInv: EnderChest")) {
+        if(false) {
             if(!whoClicked.hasPermission("NeoTccInv.use") && !whoClicked.isOp()) {
                 event.setCancelled(true);
             }
-        } else if(title.startsWith("NeoTccInv: History")) {
+        } else if(title.startsWith("Viewing ") || title.startsWith("EnderChest ") || title.startsWith("History ")) {
             event.setCancelled(true);
         }
     }

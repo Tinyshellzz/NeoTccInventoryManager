@@ -5,8 +5,10 @@ import org.bukkit.Bukkit;
 import org.bukkit.Location;
 import org.bukkit.OfflinePlayer;
 import org.bukkit.Sound;
+import org.bukkit.entity.HumanEntity;
 import org.bukkit.entity.Player;
 import org.bukkit.event.player.PlayerTeleportEvent;
+import org.bukkit.inventory.Inventory;
 import org.bukkit.plugin.Plugin;
 
 import java.util.ArrayList;
@@ -61,6 +63,17 @@ public class MyUtil {
         }
 
         return ret;
+    }
+
+    public static void closeInventory(Inventory inventory) {
+        // Copy to avoid ConcurrentModificationException
+        List<HumanEntity> viewers = new ArrayList<>(inventory.getViewers());
+
+        for (HumanEntity viewer : viewers) {
+            if (viewer instanceof Player p) {
+                p.closeInventory();
+            }
+        }
     }
 
     public static void teleport(Player player, Location location) {

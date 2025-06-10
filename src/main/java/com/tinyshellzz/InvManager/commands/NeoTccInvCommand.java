@@ -46,6 +46,8 @@ public class NeoTccInvCommand implements TabExecutor {
             return NeoTccInvService.ender(sender, command, s, args);
         } else if (subcommand.equals("history")) {
             return NeoTccInvService.history(sender, command, s, args);
+        } else if (subcommand.equals("edit")) {
+            return NeoTccInvService.edit(sender, command, s, args);
         }
 
         return false;
@@ -58,13 +60,17 @@ public class NeoTccInvCommand implements TabExecutor {
         } else if (args.length == 1) {
             String input = args[0].toLowerCase();
 
-            return MyUtil.tabComplete(Arrays.asList("reload", "rollback", "see" , "ender", "history"), input) ;
+            if(sender.isOp() || sender.hasPermission("NeoTccInv.use")) {
+                return MyUtil.tabComplete(Arrays.asList("reload", "rollback", "see", "ender", "history", "edit"), input);
+            } else {
+                return MyUtil.tabComplete(Arrays.asList("see", "ender", "history"), input);
+            }
         } else if (args.length == 2) {
             String input = args[1].toLowerCase();
             ArrayList<String> res = new ArrayList<>();
 
             switch (args[0].toLowerCase()) {
-                case "rollback": case "history":
+                case "rollback": case "history": case "edit":
                     return MyUtil.tabComplete(Arrays.asList("inv" , "ender"), input);
                 case "see":
                 case "ender":
@@ -94,8 +100,12 @@ public class NeoTccInvCommand implements TabExecutor {
             }
         } else if (args.length == 4) {
             String input = args[3].toLowerCase();
+            String subcommand = args[0].toLowerCase();
 
-            return MyUtil.tabComplete(Arrays.asList("时间(单位为秒)"), input);
+            switch (subcommand) {
+                case "rollback": case "history":
+                    return MyUtil.tabComplete(Arrays.asList("时间(单位为秒)"), input);
+            }
         }
 
         return null;

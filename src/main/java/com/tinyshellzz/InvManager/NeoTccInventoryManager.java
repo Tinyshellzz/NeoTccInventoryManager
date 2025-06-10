@@ -6,25 +6,17 @@ import com.tinyshellzz.InvManager.config.PluginConfig;
 import com.tinyshellzz.InvManager.database.CurrentEnderChestMapper;
 import com.tinyshellzz.InvManager.database.CurrentInventoryMapper;
 import com.tinyshellzz.InvManager.database.HistoryInventoryMapper;
+import com.tinyshellzz.InvManager.database.MCPlayerMapper;
 import com.tinyshellzz.InvManager.listeners.*;
 import com.tinyshellzz.InvManager.services.InventoryBackup;
 import com.tinyshellzz.InvManager.services.InventorySyncService;
-import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
-import org.bukkit.inventory.ItemStack;
 import org.bukkit.plugin.java.JavaPlugin;
 
-import java.util.HashMap;
-import java.util.UUID;
-
-import static com.tinyshellzz.InvManager.ObjectPool.currentEnderChestMapper;
-import static com.tinyshellzz.InvManager.ObjectPool.currentInventoryMapper;
+import static com.tinyshellzz.InvManager.ObjectPool.*;
 
 public class NeoTccInventoryManager extends JavaPlugin {
-    public static HashMap<UUID, ItemStack[]> inventoryMap = new HashMap<>();
-    public static HashMap<UUID, ItemStack[]> enderChestMap = new HashMap<>();
-
     @Override
     public void onEnable() {
         // team,启动！
@@ -35,32 +27,19 @@ public class NeoTccInventoryManager extends JavaPlugin {
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.AQUA + "######################");
 
         init();
+        mcPlayerMapper.update_shutdown(-2);     // 非正常重启的标记为-2
         register();
         runServices();
-
-        Runtime.getRuntime().addShutdownHook(new Thread(() -> {
-            ObjectPool.stopped = true;
-
-            if(StopCommand.stopCommand) return;
-            // This runs even during some unexpected terminations
-            Bukkit.getConsoleSender().sendMessage(ChatColor.GREEN +  "[NeoTccInv] 开始保存玩家数据! ");
-
-            for(UUID playerUUID: inventoryMap.keySet()) {
-                currentInventoryMapper.update(playerUUID, ItemStackBase64Converter.ItemStackArrayToBase64(inventoryMap.get(playerUUID)));
-            }
-            for(UUID playerUUID: enderChestMap.keySet()) {
-                currentEnderChestMapper.update(playerUUID, ItemStackBase64Converter.ItemStackArrayToBase64(enderChestMap.get(playerUUID)));
-            }
-        }));
     }
 
-    public void init(){
+    public void init() {
         ObjectPool.plugin = this;
         PluginConfig.reload();
 
         ObjectPool.historyInventoryMapper = new HistoryInventoryMapper();
         currentInventoryMapper = new CurrentInventoryMapper();
         ObjectPool.currentEnderChestMapper = new CurrentEnderChestMapper();
+        ObjectPool.mcPlayerMapper = new MCPlayerMapper();
     }
 
     public void register() {
@@ -69,6 +48,7 @@ public class NeoTccInventoryManager extends JavaPlugin {
         this.getServer().getPluginManager().registerEvents(new PlayerQuitListener(), this);
         this.getServer().getPluginManager().registerEvents(new InventoryCloseListener(), this);
         this.getServer().getPluginManager().registerEvents(new InventoryInteractListener(), this);
+        this.getServer().getPluginManager().registerEvents(new ServerCommandListener(), this);
 
         // 注册命令
         this.getCommand("NeoTccInv").setExecutor(new NeoTccInvCommand());
@@ -77,12 +57,14 @@ public class NeoTccInventoryManager extends JavaPlugin {
 
     public void runServices() {
         InventoryBackup.run();
-        InventorySyncService.run();
     }
 
     @Override
     public void onDisable() {
-        ObjectPool.stopped = true;
+        if(!ObjectPool.stopped) {
+            mcPlayerMapper.update_shutdown(-2);   // 非正常重启
+        }
+
         //TODO
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "######################");
         Bukkit.getConsoleSender().sendMessage(ChatColor.DARK_GREEN + "[NeoTccInv]" + ChatColor.RED + "#                    #");

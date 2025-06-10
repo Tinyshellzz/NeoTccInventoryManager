@@ -5,6 +5,8 @@ import com.tinyshellzz.InvManager.utils.ItemStackBase64Converter;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
 import org.bukkit.entity.Player;
+import org.bukkit.inventory.ItemStack;
+import org.jetbrains.annotations.Nullable;
 
 import java.sql.Connection;
 import java.sql.PreparedStatement;
@@ -19,7 +21,7 @@ public class HistoryInventoryMapper {
         ResultSet rs = null;
         try {
             conn = MysqlConfig.connect();
-            stmt = conn.prepareStatement("CREATE TABLE IF NOT EXISTS history_inv (" +
+            stmt = conn.prepareStatement("CREATE TABLE IF NOT EXISTS history_inv_" + PluginConfig.server_id + " (" +
                     "player_uuid Char(36)," +
                     "`time` BIGINT," +
                     "contents LONGTEXT," +
@@ -46,7 +48,7 @@ public class HistoryInventoryMapper {
         ResultSet rs = null;
         try {
             conn = MysqlConfig.connect();
-            stmt = conn.prepareStatement("INSERT INTO history_inv VALUES (?, ?, ?, ?)");
+            stmt = conn.prepareStatement("INSERT INTO history_inv_" + PluginConfig.server_id + " VALUES (?, ?, ?, ?)");
             stmt.setString(1, player_uuid.toString());
             stmt.setLong(2, System.currentTimeMillis() / 1000L);
             stmt.setString(3, contents);
@@ -66,8 +68,9 @@ public class HistoryInventoryMapper {
     }
 
     public void insert(Player player) {
+        @Nullable ItemStack[] ender_ = player.getEnderChest().getContents();
         String contents = ItemStackBase64Converter.PlayerInvToBase64(player);
-        String ender = ItemStackBase64Converter.ItemStackArrayToBase64(player.getEnderChest().getContents());
+        String ender = ItemStackBase64Converter.ItemStackArrayToBase64(ender_);
         insert(player.getUniqueId(), contents, ender);
     }
 
@@ -80,15 +83,48 @@ public class HistoryInventoryMapper {
         try {
             conn = MysqlConfig.connect();
             conn.commit();
-            stmt = conn.prepareStatement("SELECT * FROM history_inv where player_uuid = ? AND `time` > ? LIMIT 1 OFFSET 0");
+            stmt = conn.prepareStatement("SELECT * FROM history_inv_" + PluginConfig.server_id + " where player_uuid = ? AND `time` > ? LIMIT 1 OFFSET 0");
             stmt.setString(1, player_uuid.toString());
             stmt.setLong(2, unix_time_stamp);
             rs = stmt.executeQuery();
 
             if(rs.next()) {
                 ret = new String[2];
-                ret[0] = rs.getString("contents");
-                ret[1] = rs.getString("ender");
+                ret[0] = rs.getString(3);
+                ret[1] = rs.getString(4);
+            }
+        } catch (SQLException e) {
+            Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[NeoTccInventoryRecover]HistoryInventoryMapper.get:" + e.getMessage());
+        } finally {
+            try {
+                if (stmt != null) stmt.close();
+                if (rs != null) rs.close();
+                if (conn != null) conn.close();
+            } catch (SQLException e) {
+            }
+        }
+
+        return ret;
+    }
+
+    public String[] get_latest_content(UUID player_uuid) {
+        PreparedStatement stmt = null;
+        Connection conn = null;
+        ResultSet rs = null;
+        String[] ret = null;
+
+        try {
+            conn = MysqlConfig.connect();
+            conn.commit();
+            stmt = conn.prepareStatement("SELECT * FROM history_inv_" + PluginConfig.server_id + " where player_uuid = ? AND `time` < ? LIMIT 1 OFFSET 0");
+            stmt.setString(1, player_uuid.toString());
+            stmt.setLong(2, 32517406565L);
+            rs = stmt.executeQuery();
+
+            if(rs.next()) {
+                ret = new String[2];
+                ret[0] = rs.getString(3);
+                ret[1] = rs.getString(4);
             }
         } catch (SQLException e) {
             Bukkit.getConsoleSender().sendMessage(ChatColor.RED + "[NeoTccInventoryRecover]HistoryInventoryMapper.get:" + e.getMessage());
@@ -114,7 +150,7 @@ public class HistoryInventoryMapper {
         ResultSet rs = null;
         try {
             conn = MysqlConfig.connect();
-            stmt = conn.prepareStatement("DELETE FROM co_block WHERE time<?  LIMIT 100000");
+            stmt = conn.prepareStatement("DELETE FROM history_inv_" + PluginConfig.server_id + " WHERE time<?  LIMIT 100000");
             stmt.setLong(1, unix_time_stamp);
             stmt.executeUpdate();
             conn.commit();

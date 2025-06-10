@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import com.tinyshellzz.InvManager.database.CurrentEnderChestMapper;
 import com.tinyshellzz.InvManager.database.CurrentInventoryMapper;
 import com.tinyshellzz.InvManager.database.HistoryInventoryMapper;
+import com.tinyshellzz.InvManager.database.MCPlayerMapper;
 import org.bukkit.plugin.Plugin;
 
 public class ObjectPool {
@@ -14,4 +15,5 @@ public class ObjectPool {
     public static HistoryInventoryMapper historyInventoryMapper;
     public static CurrentInventoryMapper currentInventoryMapper;
     public static CurrentEnderChestMapper currentEnderChestMapper;
+    public static MCPlayerMapper mcPlayerMapper;
 }
