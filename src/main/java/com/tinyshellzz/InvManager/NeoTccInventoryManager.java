@@ -9,6 +9,7 @@ import com.tinyshellzz.InvManager.database.HistoryInventoryMapper;
 import com.tinyshellzz.InvManager.database.MCPlayerMapper;
 import com.tinyshellzz.InvManager.listeners.*;
 import com.tinyshellzz.InvManager.services.InventoryBackup;
+import com.tinyshellzz.InvManager.services.InventoryCleanService;
 import com.tinyshellzz.InvManager.services.InventorySyncService;
 import org.bukkit.Bukkit;
 import org.bukkit.ChatColor;
@@ -57,6 +58,7 @@ public class NeoTccInventoryManager extends JavaPlugin {
 
     public void runServices() {
         InventoryBackup.run();
+        InventoryCleanService.run();
     }
 
     @Override

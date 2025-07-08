@@ -15,24 +15,19 @@ import java.util.concurrent.TimeUnit;
 import static com.tinyshellzz.InvManager.ObjectPool.*;
 
 public class InventoryBackup {
-    private static int k = 0;
+
     public static ScheduledExecutorService scheduler = Executors.newScheduledThreadPool(1);
 
     public static void run() {
         // 每隔 PluginConfig.backup_interval 时间备份一次所有在线玩家的背包
         scheduler.scheduleAtFixedRate(() -> {
                     try {
-                        if (k>=20) {
-                            Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "[NeoTccInv] 背包备份");
-                            k = 0;
-                        } else {
-                            k++;
-                        }
+                        Bukkit.getConsoleSender().sendMessage(ChatColor.AQUA + "[NeoTccInv] 背包备份");
 
-                        if(!ObjectPool.stopped) {
+                        if (!ObjectPool.stopped) {
                             for (Player p : plugin.getServer().getOnlinePlayers()) {
                                 Player playerExact = Bukkit.getPlayerExact(p.getName());
-                                if(playerExact != null && playerExact.isOnline()) {
+                                if (playerExact != null && playerExact.isOnline()) {
                                     if (ObjectPool.stopped) break;
                                     historyInventoryMapper.insert(playerExact);
                                 }
