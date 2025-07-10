@@ -22,7 +22,7 @@
 ```
 /NeotccInv ender <玩家>
 ```
-编辑玩家的背包|末影箱
+编辑玩家的背包|末影箱  需要NeoTccInv.use权限
 ```
 /NeotccInv edit [inv|ender] <玩家>
 ```
