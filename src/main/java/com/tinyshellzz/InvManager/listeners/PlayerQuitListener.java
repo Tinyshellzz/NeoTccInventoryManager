@@ -21,7 +21,9 @@ public class PlayerQuitListener implements Listener {
         if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("玩家退出，保存背包");
         currentInventoryMapper.update(player);
         currentEnderChestMapper.update(player);
-        mcPlayerMapper.update_shutdown_by_uuid(player.getUniqueId(), -1);   // shutdown 是-1
+        plugin.getServer().getAsyncScheduler.runNow(plugin, () -> {
+            mcPlayerMapper.update_shutdown_by_uuid(player.getUniqueId(), -1);   // shutdown 是-1
+        });
 
         String target = player.getName().toLowerCase();
         if(NeoTccInvService.editingEnderChest.containsKey(target)) {    // 玩家离线, 关闭末影箱
