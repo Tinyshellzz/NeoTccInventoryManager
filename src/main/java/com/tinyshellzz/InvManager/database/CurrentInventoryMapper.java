@@ -23,8 +23,7 @@ public class CurrentInventoryMapper {
             stmt = conn.prepareStatement("CREATE TABLE IF NOT EXISTS current_inv (" +
                     "player_uuid Char(36)," +
                     "contents LONGTEXT," +
-                    "UNIQUE KEY (player_uuid)," +
-                    "KEY (contents)" +
+                    "UNIQUE KEY (player_uuid)" +
                     ") ENGINE=InnoDB CHARACTER SET=utf8;");
             stmt.executeUpdate();
             conn.commit();

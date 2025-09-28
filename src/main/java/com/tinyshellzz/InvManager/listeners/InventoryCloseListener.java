@@ -52,8 +52,10 @@ public class InventoryCloseListener implements Listener {
                     full[40] = contents[4];
                     String contents_ = ItemStackBase64Converter.ItemStackArrayToBase64(full);
 
-                    currentInventoryMapper.update(userByName.uuid, contents_);
-                    mcPlayerMapper.update_shutdown_by_uuid(userByName.uuid, -1);    // 让更改生效
+                    new Thread(() -> {
+                        currentInventoryMapper.update(userByName.uuid, contents_);
+                        mcPlayerMapper.update_shutdown_by_uuid(userByName.uuid, -1);    // 让更改生效
+                    }).start();
                 }
 
                 if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("保存更改的背包内容 " + target);
@@ -71,8 +73,10 @@ public class InventoryCloseListener implements Listener {
                 } else {
                     MCPlayer userByName = mcPlayerMapper.get_user_by_name(target);
 
-                    currentEnderChestMapper.update(userByName.uuid, ItemStackBase64Converter.ItemStackArrayToBase64(contents));
-                    mcPlayerMapper.update_shutdown_by_uuid(userByName.uuid, -1);    // 让更改生效
+                    new Thread(() -> {
+                        currentEnderChestMapper.update(userByName.uuid, ItemStackBase64Converter.ItemStackArrayToBase64(contents));
+                        mcPlayerMapper.update_shutdown_by_uuid(userByName.uuid, -1);    // 让更改生效
+                    }).start();
                 }
 
                 if(PluginConfig.debug) Bukkit.getConsoleSender().sendMessage("保存更改的末影箱内容 " + target);

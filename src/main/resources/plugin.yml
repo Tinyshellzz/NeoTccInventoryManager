@@ -8,7 +8,7 @@ folia-supported: true
 commands:
   NeoTccInv:
     description: NeoTccInv Command.
-    usage: /NeoTccInv rollback <玩家> <秒>
+    usage: /NeoTccInv rollback <player> <seconds>
     default: true
   stop:
     description: Safely stop the server
